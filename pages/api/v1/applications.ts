@@ -135,11 +135,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { userId: session.id },
         include: {
           skills: { include: { skill: true } },
+          programmingLanguages: true,
         },
       });
 
       if (!studentProfile) {
         return res.status(404).json({ success: false, message: "Student profile not found" });
+      }
+
+      // Check Minimum CGPA Requirement
+      const studentCgpa = studentProfile.cgpa ?? 0;
+      const minRequiredCgpa = job.minCgpa ?? 0;
+
+      if (studentCgpa < minRequiredCgpa) {
+        return res.status(403).json({
+          success: false,
+          message: `You do not meet the minimum CGPA requirement of ${minRequiredCgpa} for this opportunity (your CGPA: ${studentCgpa.toFixed(2)}).`,
+        });
       }
 
       // Check for duplicate application
@@ -170,15 +182,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         requiredSkills = [];
       }
 
-      const studentSkillRecords = studentProfile.skills.map((ss) => ({
-        id: ss.skill.id,
-        name: ss.skill.name,
-        category: ss.skill.category,
-        selfScore: ss.selfScore,
-        verifiedScore: ss.verifiedScore,
-        verificationStatus: ss.verificationStatus,
-        isVerified: ss.verificationStatus === "ASSESSMENT_VERIFIED",
-      }));
+      const studentSkillRecords = [
+        ...studentProfile.skills.map((ss) => ({
+          id: ss.skill.id,
+          name: ss.skill.name,
+          category: ss.skill.category,
+          selfScore: ss.selfScore,
+          verifiedScore: ss.verifiedScore,
+          verificationStatus: ss.verificationStatus,
+          isVerified: ss.verificationStatus === "ASSESSMENT_VERIFIED",
+        })),
+        ...studentProfile.programmingLanguages.map((pl) => ({
+          id: pl.id,
+          name: pl.language,
+          category: "Languages",
+          selfScore: pl.proficiency === "Expert" ? 100 : pl.proficiency === "Advanced" ? 90 : pl.proficiency === "Intermediate" ? 70 : 40,
+          verifiedScore: pl.verifiedScore || (pl.proficiency === "Expert" ? 100 : pl.proficiency === "Advanced" ? 90 : pl.proficiency === "Intermediate" ? 70 : 40),
+          verificationStatus: pl.verificationStatus,
+          isVerified: pl.verificationStatus !== "SELF_REPORTED",
+        })),
+      ];
 
       const matchResult = calculateJobMatchScore(
         studentSkillRecords,

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, signJwtToken } from "@/lib/auth";
-import { UserRole, UserSession } from "@/types";
+import { hashPassword, signJwtToken, getUserWithProfile } from "@/lib/auth";
+import { UserRole } from "@/types";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -9,7 +9,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { name, email, password, confirmPassword, phone, role } = req.body;
+    const {
+      name,
+      email,
+      password,
+      confirmPassword,
+      phone,
+      role,
+      collegeName,
+      institutionName,
+      companyName,
+      degree,
+      cgpa,
+      department,
+      graduationYear,
+    } = req.body;
 
     // 1. Basic Validation
     if (!name || typeof name !== "string" || name.trim().length < 2) {
@@ -26,6 +40,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Phone validation: exactly 10 digits
+    if (phone) {
+      const cleanPhone = phone.toString().replace(/[\s\-\+\(\)]/g, "");
+      const tenDigitPhone = cleanPhone.length > 10 && cleanPhone.startsWith("91") ? cleanPhone.slice(2) : cleanPhone;
+      if (!/^\d{10}$/.test(tenDigitPhone)) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number must be exactly 10 digits (numeric only).",
+        });
+      }
+    }
+
     if (!password || typeof password !== "string" || password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -40,15 +66,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // 2. Role Security Check - ADMIN is strictly prohibited from public registration
-    const targetRole = (role?.toUpperCase() || "STUDENT") as UserRole;
-    const allowedPublicRoles: UserRole[] = ["STUDENT", "INDUSTRY", "FACULTY", "INSTITUTION"];
+    // 2. Role Normalization & Security Check
+    let targetRole: UserRole = "STUDENT";
+    const roleUpper = (role?.toString().toUpperCase() || "STUDENT").trim();
 
-    if (targetRole === "ADMIN" || !allowedPublicRoles.includes(targetRole)) {
-      return res.status(403).json({
+    if (roleUpper === "STUDENT") {
+      targetRole = "STUDENT";
+    } else if (roleUpper === "INDUSTRY" || roleUpper === "RECRUITER") {
+      targetRole = "INDUSTRY";
+    } else if (roleUpper === "FACULTY" || roleUpper === "TPO/FACULTY" || roleUpper === "TPO_FACULTY") {
+      targetRole = "FACULTY";
+    } else if (roleUpper === "INSTITUTION" || roleUpper === "TPO") {
+      targetRole = "INSTITUTION";
+    } else {
+      return res.status(400).json({
         success: false,
-        message: "Administrative accounts cannot be created via public registration. Contact your platform supervisor.",
+        message: "Invalid role specified. Supported roles: STUDENT, INDUSTRY, TPO / FACULTY.",
       });
+    }
+
+    // CGPA Validation for Student: 0.0 to 10.0
+    let parsedCgpa = 8.5;
+    if (targetRole === "STUDENT" && cgpa !== undefined && cgpa !== null && cgpa !== "") {
+      const numCgpa = parseFloat(cgpa);
+      if (isNaN(numCgpa) || numCgpa < 0 || numCgpa > 10) {
+        return res.status(400).json({
+          success: false,
+          message: "CGPA must be a valid number between 0.0 and 10.0.",
+        });
+      }
+      parsedCgpa = numCgpa;
     }
 
     // 3. Check for Existing Account
@@ -59,60 +106,74 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "An account with this email address already exists. Please log in instead.",
+        message: "An account with this email address already exists. Please sign in instead.",
       });
     }
 
     // 4. Hash Password
     const passwordHash = await hashPassword(password);
 
-    // 5. Create User & Initial Role Profile Container in Atomic Transaction
+    // Cleaned 10-digit phone
+    let formattedPhone = phone ? phone.toString().replace(/[\s\-\+\(\)]/g, "") : null;
+    if (formattedPhone && formattedPhone.length > 10 && formattedPhone.startsWith("91")) {
+      formattedPhone = formattedPhone.slice(2);
+    }
+
+    // 5. Create User & Profile in Database Transaction
+    const currentYear = new Date().getFullYear();
+    const studentDegree = degree || "B.Tech";
+    const degreeDuration = studentDegree === "B.Tech" ? 4 : studentDegree === "M.Tech" ? 2 : 3;
+    const computedGradYear = graduationYear ? Number(graduationYear) : currentYear + degreeDuration;
+
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           name: name.trim(),
           email: email.toLowerCase().trim(),
-          phone: phone ? phone.trim() : null,
+          phone: formattedPhone,
           passwordHash,
           role: targetRole,
-          isOnboarded: false, // Must complete onboarding steps
+          isOnboarded: true, // Fully populated at registration
         },
       });
 
-      // Create initial empty role profile container
       if (targetRole === "STUDENT") {
         await tx.studentProfile.create({
           data: {
             userId: user.id,
-            collegeName: "To be updated in onboarding",
-            degree: "B.Tech",
-            department: "Engineering",
-            graduationYear: new Date().getFullYear() + 2,
+            collegeName: collegeName?.trim() || institutionName?.trim() || "National Institute of Technology",
+            degree: studentDegree,
+            department: department?.trim() || "Computer Science & Engineering",
+            cgpa: parsedCgpa,
+            graduationYear: computedGradYear,
+            targetJobRole: "Software Developer",
+            targetCareersJson: JSON.stringify(["Software Developer", "Full Stack Developer"]),
           },
         });
       } else if (targetRole === "INDUSTRY") {
         await tx.industryProfile.create({
           data: {
             userId: user.id,
-            companyName: "To be updated in onboarding",
+            companyName: companyName?.trim() || "Enterprise Partner",
             companyWebsite: "https://company.example.com",
+            designation: "Talent Acquisition Lead",
           },
         });
       } else if (targetRole === "FACULTY") {
         await tx.facultyProfile.create({
           data: {
             userId: user.id,
-            institutionName: "To be updated in onboarding",
-            department: "Engineering",
-            designation: "Faculty Mentor",
+            institutionName: institutionName?.trim() || collegeName?.trim() || "National Institute of Technology",
+            department: department?.trim() || "Computer Science & Engineering",
+            designation: "Associate Professor & Mentor",
           },
         });
       } else if (targetRole === "INSTITUTION") {
         await tx.institutionProfile.create({
           data: {
             userId: user.id,
-            institutionName: "To be updated in onboarding",
-            institutionType: "Engineering Institution",
+            institutionName: institutionName?.trim() || collegeName?.trim() || "National Institute of Technology",
+            institutionType: "Tier-1 Engineering Institution",
           },
         });
       }
@@ -120,20 +181,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return user;
     });
 
-    // 6. Build Fresh User Session
-    const userSession: UserSession = {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      phone: newUser.phone || undefined,
-      role: newUser.role as UserRole,
-      avatarUrl: newUser.avatarUrl || undefined,
-      isOnboarded: false,
-    };
+    const userWithProfile = await getUserWithProfile(newUser.id);
+    if (!userWithProfile) {
+      throw new Error("Failed to load created user profile");
+    }
 
-    const token = signJwtToken(userSession);
+    const token = signJwtToken(userWithProfile);
 
-    // 7. Set Secure HttpOnly Cookie
     res.setHeader(
       "Set-Cookie",
       `sih_token=${token}; Path=/; HttpOnly; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`
@@ -141,18 +195,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(201).json({
       success: true,
-      message: "Account created successfully! Please complete your role onboarding profile.",
+      message: "Account created successfully! Welcome to BridgeNext AI.",
       data: {
-        user: userSession,
+        user: userWithProfile,
         token,
-        isOnboarded: false,
+        isOnboarded: true,
       },
     });
   } catch (error: any) {
     console.error("Registration error:", error);
     return res.status(500).json({
       success: false,
-      message: "An unexpected error occurred while creating your account. Please try again.",
+      message: "Internal server error during registration. Please try again.",
     });
   }
 }

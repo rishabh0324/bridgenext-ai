@@ -73,10 +73,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "POST") {
     try {
-      if (!session || (session.role !== "FACULTY" && session.role !== "ADMIN")) {
+      if (
+        !session ||
+        (session.role !== "FACULTY" &&
+          session.role !== "INSTITUTION" &&
+          session.role !== "ADMIN")
+      ) {
         return res.status(401).json({
           success: false,
-          message: "Only faculty mentors or administrators can endorse student skills",
+          message: "Only authorized faculty mentors, TPOs, or administrators can endorse student skills",
         });
       }
 

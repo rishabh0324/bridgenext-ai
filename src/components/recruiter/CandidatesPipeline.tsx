@@ -15,6 +15,7 @@ import {
   Award,
 } from "lucide-react";
 import Link from "next/link";
+import { ApplicantProfileModal } from "./ApplicantProfileModal";
 
 interface CandidatesPipelineProps {
   candidates: CandidateItem[];
@@ -38,6 +39,7 @@ export const CandidatesPipeline: React.FC<CandidatesPipelineProps> = ({
   const [activeStage, setActiveStage] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [minMatchFilter, setMinMatchFilter] = useState<number>(0);
+  const [selectedCandidate, setSelectedCandidate] = useState<CandidateItem | null>(null);
 
   useEffect(() => {
     setCandidates(initialCandidates);
@@ -226,9 +228,16 @@ export const CandidatesPipeline: React.FC<CandidatesPipelineProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCandidate(cand)}
+                  >
+                    View Dossier
+                  </Button>
                   <Link href={`/p/${cand.name.toLowerCase().replace(/\s+/g, "-")}`}>
                     <Button variant="ghost" size="sm" icon={<ExternalLink size={13} />}>
-                      Verified Portfolio
+                      Portfolio
                     </Button>
                   </Link>
                   {normStatus !== "offered" && (
@@ -247,6 +256,14 @@ export const CandidatesPipeline: React.FC<CandidatesPipelineProps> = ({
           })
         )}
       </div>
+
+      {/* Applicant Profile Dossier Modal */}
+      <ApplicantProfileModal
+        candidate={selectedCandidate}
+        isOpen={!!selectedCandidate}
+        onClose={() => setSelectedCandidate(null)}
+        onAdvanceStage={advanceStage}
+      />
     </Card>
   );
 };

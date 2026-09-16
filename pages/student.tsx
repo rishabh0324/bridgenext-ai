@@ -12,6 +12,8 @@ import { SkillGapMatrix } from "@/components/student/SkillGapMatrix";
 import { TargetRoleSelector } from "@/components/student/TargetRoleSelector";
 import { RoadmapTimeline } from "@/components/student/RoadmapTimeline";
 import { JobMatchesList } from "@/components/student/JobMatchesList";
+import { ProgrammingLanguagesCard } from "@/components/student/ProgrammingLanguagesCard";
+import { StudentGuidanceBooking } from "@/components/student/StudentGuidanceBooking";
 import {
   GraduationCap,
   Award,
@@ -31,19 +33,27 @@ import {
   BarChart3,
   Compass,
   AlertTriangle,
-  AlertOctagon,
   BrainCircuit,
   Briefcase,
+  Terminal,
 } from "lucide-react";
+import { ProgrammingLanguageItem } from "@/types";
+
+type StudentActiveTab =
+  | "ROADMAP_GAP"
+  | "PROGRAMMING_LANGS"
+  | "GUIDANCE_SLOTS"
+  | "JOB_MATCHES"
+  | "SKILL_MATRIX";
 
 export default function StudentDashboardPage() {
   const { user, logout } = useAuth();
   const profile = user?.studentProfile;
 
-  // Active View Tab: "ROADMAP_GAP" | "JOB_MATCHES" | "SKILL_MATRIX"
-  const [activeTab, setActiveTab] = useState<"ROADMAP_GAP" | "JOB_MATCHES" | "SKILL_MATRIX">("ROADMAP_GAP");
+  const [activeTab, setActiveTab] = useState<StudentActiveTab>("ROADMAP_GAP");
 
   const [skills, setSkills] = useState<any[]>([]);
+  const [programmingLangs, setProgrammingLangs] = useState<ProgrammingLanguageItem[]>([]);
   const [assessments, setAssessments] = useState<any[]>([]);
   const [targetRoles, setTargetRoles] = useState<any[]>([]);
   const [roadmapData, setRoadmapData] = useState<any | null>(null);
@@ -59,24 +69,31 @@ export default function StudentDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [skillsRes, assessmentsRes, rolesRes, roadmapRes, jobsRes] = await Promise.all([
-        fetch("/api/v1/skills"),
-        fetch("/api/v1/assessments"),
-        fetch("/api/v1/roadmaps/targets"),
-        fetch("/api/v1/roadmaps"),
-        fetch("/api/v1/jobs"),
-      ]);
+      const [skillsRes, langsRes, assessmentsRes, rolesRes, roadmapRes, jobsRes] =
+        await Promise.all([
+          fetch("/api/v1/skills"),
+          fetch("/api/v1/student/programming-languages"),
+          fetch("/api/v1/assessments"),
+          fetch("/api/v1/roadmaps/targets"),
+          fetch("/api/v1/roadmaps"),
+          fetch("/api/v1/jobs"),
+        ]);
 
-      const [skillsJson, assessmentsJson, rolesJson, roadmapJson, jobsJson] = await Promise.all([
-        skillsRes.json(),
-        assessmentsRes.json(),
-        rolesRes.json(),
-        roadmapRes.json(),
-        jobsRes.json(),
-      ]);
+      const [skillsJson, langsJson, assessmentsJson, rolesJson, roadmapJson, jobsJson] =
+        await Promise.all([
+          skillsRes.json(),
+          langsRes.json(),
+          assessmentsRes.json(),
+          rolesRes.json(),
+          roadmapRes.json(),
+          jobsRes.json(),
+        ]);
 
       if (skillsJson.success && skillsJson.data) {
         setSkills(skillsJson.data);
+      }
+      if (langsJson.success && langsJson.data) {
+        setProgrammingLangs(langsJson.data);
       }
       if (assessmentsJson.success && assessmentsJson.data) {
         setAssessments(assessmentsJson.data);
@@ -164,6 +181,8 @@ export default function StudentDashboardPage() {
             j.id === jobId ? { ...j, isApplied: true, applicationStatus: "APPLIED" } : j
           )
         );
+      } else {
+        alert(json.message || "Unable to submit application.");
       }
     } catch (e) {
       console.error("Error applying for job opening:", e);
@@ -175,11 +194,15 @@ export default function StudentDashboardPage() {
     setIsTestModalOpen(true);
   };
 
-  const verifiedSkillsCount = skills.filter((s) => s.isVerified || !!s.verifiedScore).length;
+  const verifiedSkillsCount =
+    skills.filter((s) => s.isVerified || !!s.verifiedScore).length +
+    programmingLangs.filter((l) => l.verificationStatus !== "SELF_REPORTED").length;
+
   const verifiedBadges = skills.filter((s) => s.badgeEarned);
 
   const fitScore = roadmapData?.overallFitScore ?? 89;
   const cosineScore = roadmapData?.cosineSimilarity ?? 0.948;
+  const studentUsername = user?.name?.toLowerCase().replace(/\s+/g, "-") || "aarav-sharma";
 
   return (
     <AuthGuard allowedRoles={["STUDENT"]}>
@@ -207,15 +230,17 @@ export default function StudentDashboardPage() {
                 <span>•</span>
                 <span className="text-slate-400">{profile?.collegeName || "National Institute of Technology"}</span>
                 <span>•</span>
+                <span className="text-slate-300 font-bold">CGPA: {profile?.cgpa || 8.5}/10</span>
+                <span>•</span>
                 <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <ShieldCheck size={13} /> NEP 2020 OBE Profile Active
+                  <ShieldCheck size={13} /> BridgeNext AI OBE Profile Active
                 </span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 self-start md:self-center">
-            <Link href={`/p/${user?.name?.toLowerCase().replace(/\s+/g, "-") || "aarav-sharma"}`}>
+            <Link href={`/p/${studentUsername}`}>
               <Button variant="secondary" size="sm" icon={<ExternalLink size={14} />}>
                 Public Verified Portfolio
               </Button>
@@ -242,7 +267,31 @@ export default function StudentDashboardPage() {
             }`}
           >
             <Compass size={15} />
-            Phase 4: AI Skill-Gap Analysis & Roadmaps
+            Target Career & AI Roadmaps
+          </button>
+
+          <button
+            onClick={() => setActiveTab("PROGRAMMING_LANGS")}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "PROGRAMMING_LANGS"
+                ? "bg-primary-500 text-white shadow-glow"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <Terminal size={15} />
+            Programming Languages ({programmingLangs.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("GUIDANCE_SLOTS")}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "GUIDANCE_SLOTS"
+                ? "bg-primary-500 text-white shadow-glow"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <Calendar size={15} />
+            Mentor Guidance Slots
           </button>
 
           <button
@@ -254,7 +303,7 @@ export default function StudentDashboardPage() {
             }`}
           >
             <Briefcase size={15} />
-            Phase 5: AI-Matched Opportunities ({jobs.length})
+            AI-Matched Opportunities ({jobs.length})
           </button>
 
           <button
@@ -266,7 +315,7 @@ export default function StudentDashboardPage() {
             }`}
           >
             <BarChart3 size={15} />
-            Phase 3: Skill Radar & Adaptive Tests
+            Skill Radar & Adaptive Tests
           </button>
         </div>
 
@@ -274,10 +323,14 @@ export default function StudentDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
           <Card className="p-4 space-y-1">
             <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-              Tracked Skills
+              Tracked Skills & Langs
             </span>
-            <p className="text-xl font-extrabold text-white">{skills.length}</p>
-            <p className="text-[10px] text-slate-400">Master Matrix Competencies</p>
+            <p className="text-xl font-extrabold text-white">
+              {skills.length + programmingLangs.length}
+            </p>
+            <p className="text-[10px] text-slate-400">
+              {skills.length} skills, {programmingLangs.length} languages
+            </p>
           </Card>
 
           <Card className="p-4 space-y-1">
@@ -285,7 +338,7 @@ export default function StudentDashboardPage() {
               <ShieldCheck size={12} /> Verified Badges
             </span>
             <p className="text-xl font-extrabold text-emerald-300">{verifiedSkillsCount}</p>
-            <p className="text-[10px] text-slate-400">Proctored & Endorsed</p>
+            <p className="text-[10px] text-slate-400">Proctored & Faculty Endorsed</p>
           </Card>
 
           <Card className="p-4 space-y-1">
@@ -298,18 +351,16 @@ export default function StudentDashboardPage() {
 
           <Card className="p-4 space-y-1">
             <span className="text-[11px] text-amber-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-              <Target size={12} /> Target Role Fit
+              <Target size={12} /> Target Career Fit
             </span>
             <p className="text-xl font-extrabold text-amber-300">{fitScore}%</p>
             <p className="text-[10px] text-slate-400 truncate">
-              {roadmapData?.targetRole || roadmapData?.roleTitle || "Full-Stack AI Architect"}
+              {roadmapData?.targetRole || roadmapData?.roleTitle || "Full Stack Developer"}
             </p>
           </Card>
         </div>
 
-        {/* ---------------------------------------------------- */}
-        {/* TAB 1: PHASE 4 AI SKILL-GAP & LEARNING ROADMAPS      */}
-        {/* ---------------------------------------------------- */}
+        {/* TAB 1: TARGET CAREER & AI ROADMAPS */}
         {activeTab === "ROADMAP_GAP" && (
           <div className="space-y-6">
             <TargetRoleSelector
@@ -328,7 +379,7 @@ export default function StudentDashboardPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                      AI Competency Vector Analysis • {roadmapData.targetRole || roadmapData.roleTitle}
+                      BridgeNext AI Competency Vector Analysis • {roadmapData.targetRole || roadmapData.roleTitle}
                     </h4>
                     <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-3xl">
                       {roadmapData.gapSummary}
@@ -376,18 +427,35 @@ export default function StudentDashboardPage() {
           </div>
         )}
 
-        {/* ---------------------------------------------------- */}
-        {/* TAB 2: PHASE 5 AI-MATCHED OPPORTUNITIES & DRIVES     */}
-        {/* ---------------------------------------------------- */}
-        {activeTab === "JOB_MATCHES" && (
+        {/* TAB 2: PROGRAMMING LANGUAGES */}
+        {activeTab === "PROGRAMMING_LANGS" && (
           <div className="space-y-6">
-            <JobMatchesList jobs={jobs} onApply={handleApplyJob} />
+            <ProgrammingLanguagesCard
+              languages={programmingLangs}
+              onRefresh={loadData}
+            />
           </div>
         )}
 
-        {/* ---------------------------------------------------- */}
-        {/* TAB 3: PHASE 3 SKILL RADAR & ADAPTIVE ASSESSMENTS    */}
-        {/* ---------------------------------------------------- */}
+        {/* TAB 3: GUIDANCE SLOTS */}
+        {activeTab === "GUIDANCE_SLOTS" && (
+          <div className="space-y-6">
+            <StudentGuidanceBooking onRefresh={loadData} />
+          </div>
+        )}
+
+        {/* TAB 4: JOB MATCHES */}
+        {activeTab === "JOB_MATCHES" && (
+          <div className="space-y-6">
+            <JobMatchesList
+              jobs={jobs}
+              studentCgpa={profile?.cgpa || 8.5}
+              onApply={handleApplyJob}
+            />
+          </div>
+        )}
+
+        {/* TAB 5: SKILL RADAR & ADAPTIVE TESTS */}
         {activeTab === "SKILL_MATRIX" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -406,7 +474,7 @@ export default function StudentDashboardPage() {
                       <Badge variant="purple" size="sm">NEP 2020 Aligned</Badge>
                     </div>
                     <p className="text-xs text-slate-400 mt-1">
-                      Cryptographically tied credentials verified via adaptive assessments and faculty endorsements.
+                      Cryptographically verified badges based on adaptive proctored tests and faculty endorsements.
                     </p>
                   </div>
 
@@ -442,7 +510,7 @@ export default function StudentDashboardPage() {
 
                   <div className="p-3 rounded-2xl bg-indigo-500/[0.06] border border-indigo-500/20 flex items-center justify-between text-xs text-slate-300">
                     <span>Share your public badge verification link with corporate recruiters</span>
-                    <Link href={`/p/${user?.name?.toLowerCase().replace(/\s+/g, "-") || "aarav-sharma"}`}>
+                    <Link href={`/p/${studentUsername}`}>
                       <span className="text-primary-400 font-bold hover:underline flex items-center gap-1">
                         Open <ArrowRight size={12} />
                       </span>
@@ -506,95 +574,28 @@ export default function StudentDashboardPage() {
                         onClick={() => handleLaunchAssessment(test.id)}
                         icon={<Play size={13} />}
                       >
-                        {isPassed ? "Retake Assessment" : "Take Assessment"}
+                        {isPassed ? "Retake Assessment" : "Launch Proctored Assessment"}
                       </Button>
                     </div>
                   );
                 })}
               </div>
             </Card>
-
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <Layers size={18} className="text-indigo-400" />
-                    3-Tier Verification Matrix
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Breakdown of competencies according to NEP 2020 Outcome-Based Education verification hierarchy.
-                  </p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setIsAddSkillOpen(true)} icon={<Plus size={14} />}>
-                  Add Skill
-                </Button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-white/10 text-slate-400 uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="py-2.5 px-3">Competency</th>
-                      <th className="py-2.5 px-3">Category</th>
-                      <th className="py-2.5 px-3">Self Score</th>
-                      <th className="py-2.5 px-3">Verified Score</th>
-                      <th className="py-2.5 px-3">Industry Benchmark</th>
-                      <th className="py-2.5 px-3">Verification Tier</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {skills.map((s) => (
-                      <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-3 px-3 font-semibold text-white">{s.name}</td>
-                        <td className="py-3 px-3 text-slate-400">{s.category}</td>
-                        <td className="py-3 px-3 text-indigo-300 font-medium">{s.selfScore}%</td>
-                        <td className="py-3 px-3">
-                          {s.verifiedScore ? (
-                            <span className="text-emerald-400 font-bold">{s.verifiedScore}%</span>
-                          ) : (
-                            <span className="text-slate-500 font-mono">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-3 text-cyan-300">{s.industryBenchmark}%</td>
-                        <td className="py-3 px-3">
-                          {s.verificationStatus === "ASSESSMENT_VERIFIED" ? (
-                            <Badge variant="success" size="sm">
-                              <CheckCircle2 size={11} className="mr-1" /> Assessment Verified
-                            </Badge>
-                          ) : s.verificationStatus === "FACULTY_ENDORSED" ? (
-                            <Badge variant="warning" size="sm">
-                              <Award size={11} className="mr-1" /> Faculty Endorsed
-                            </Badge>
-                          ) : (
-                            <Badge variant="neutral" size="sm">
-                              Self-Reported
-                            </Badge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
           </div>
         )}
 
         {/* Modals */}
-        <ProctoredAssessmentModal
-          assessmentId={activeTestId}
-          isOpen={isTestModalOpen}
-          onClose={() => {
-            setIsTestModalOpen(false);
-            setActiveTestId(null);
-          }}
-          onAssessmentCompleted={loadData}
-        />
-
         <AddSkillModal
           isOpen={isAddSkillOpen}
           onClose={() => setIsAddSkillOpen(false)}
           onSkillAdded={loadData}
+        />
+
+        <ProctoredAssessmentModal
+          isOpen={isTestModalOpen}
+          onClose={() => setIsTestModalOpen(false)}
+          assessmentId={activeTestId}
+          onAssessmentCompleted={loadData}
         />
       </div>
     </AuthGuard>

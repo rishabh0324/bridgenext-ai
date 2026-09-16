@@ -1,5 +1,25 @@
 export type UserRole = "STUDENT" | "INDUSTRY" | "FACULTY" | "INSTITUTION" | "ADMIN";
 
+export interface ProgrammingLanguageItem {
+  id?: string;
+  studentProfileId?: string;
+  language: string;
+  proficiency: "Beginner" | "Intermediate" | "Advanced" | "Expert" | string;
+  verificationStatus?: "SELF_REPORTED" | "FACULTY_ENDORSED" | "ASSESSMENT_VERIFIED" | string;
+  verifiedScore?: number | null;
+  relatedProjects?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface TargetCareerOption {
+  id: string;
+  title: string;
+  category?: string;
+  description?: string;
+  icon?: string;
+}
+
 export interface StudentProfileData {
   id?: string;
   userId?: string;
@@ -14,6 +34,8 @@ export interface StudentProfileData {
   rollNo?: string | null;
   bio?: string | null;
   targetJobRole?: string | null;
+  targetCareersJson?: string | null;
+  targetCareers?: string[];
   preferredLocation?: string | null;
   preferredIndustry?: string | null;
   softSkills?: string | null;
@@ -22,6 +44,7 @@ export interface StudentProfileData {
   createdAt?: Date;
   updatedAt?: Date;
   skills?: any[];
+  programmingLanguages?: ProgrammingLanguageItem[];
   projects?: any[];
   roadmaps?: any[];
   applications?: any[];

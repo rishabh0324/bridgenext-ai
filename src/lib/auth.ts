@@ -48,6 +48,7 @@ export async function getUserWithProfile(userId: string): Promise<UserSession | 
         studentProfile: {
           include: {
             skills: { include: { skill: true } },
+            programmingLanguages: true,
             projects: true,
             roadmaps: { include: { milestones: true } },
           },

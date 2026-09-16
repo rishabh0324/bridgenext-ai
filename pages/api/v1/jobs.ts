@@ -53,21 +53,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: { userId: session.id },
           include: {
             skills: { include: { skill: true } },
+            programmingLanguages: true,
             applications: true,
           },
         });
 
         if (studentProfile) {
           studentCgpa = studentProfile.cgpa;
-          studentSkillRecords = studentProfile.skills.map((ss) => ({
-            id: ss.skill.id,
-            name: ss.skill.name,
-            category: ss.skill.category,
-            selfScore: ss.selfScore,
-            verifiedScore: ss.verifiedScore,
-            verificationStatus: ss.verificationStatus,
-            isVerified: ss.verificationStatus === "ASSESSMENT_VERIFIED",
-          }));
+          studentSkillRecords = [
+            ...studentProfile.skills.map((ss) => ({
+              id: ss.skill.id,
+              name: ss.skill.name,
+              category: ss.skill.category,
+              selfScore: ss.selfScore,
+              verifiedScore: ss.verifiedScore,
+              verificationStatus: ss.verificationStatus,
+              isVerified: ss.verificationStatus === "ASSESSMENT_VERIFIED",
+            })),
+            ...studentProfile.programmingLanguages.map((pl) => ({
+              id: pl.id,
+              name: pl.language,
+              category: "Languages",
+              selfScore: pl.proficiency === "Expert" ? 100 : pl.proficiency === "Advanced" ? 90 : pl.proficiency === "Intermediate" ? 70 : 40,
+              verifiedScore: pl.verifiedScore || (pl.proficiency === "Expert" ? 100 : pl.proficiency === "Advanced" ? 90 : pl.proficiency === "Intermediate" ? 70 : 40),
+              verificationStatus: pl.verificationStatus,
+              isVerified: pl.verificationStatus !== "SELF_REPORTED",
+            })),
+          ];
 
           studentProfile.applications.forEach((app) => {
             studentAppliedJobIds.set(app.jobPostingId, app.status);

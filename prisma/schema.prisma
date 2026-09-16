@@ -12,6 +12,7 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
+  authUserId    String?   @unique
   email         String    @unique
   passwordHash  String
   name          String
@@ -46,6 +47,7 @@ model StudentProfile {
   rollNo             String?
   bio                String?
   targetJobRole      String?  @default("Full-Stack AI Solutions Architect")
+  targetCareersJson  String?  @default("[\"Software Developer\",\"Full Stack Developer\"]")
   preferredLocation  String?  @default("Bengaluru / Remote")
   preferredIndustry  String?  @default("AI & Cloud Software")
   softSkills         String?  @default("Problem Solving, Team Leadership, Fast Learner")
@@ -54,11 +56,12 @@ model StudentProfile {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  skills             StudentSkill[]
-  projects           PortfolioProject[]
-  roadmaps           LearningRoadmap[]
-  applications       JobApplication[]
-  bookings           MentorshipBooking[]
+  skills               StudentSkill[]
+  programmingLanguages StudentProgrammingLanguage[]
+  projects             PortfolioProject[]
+  roadmaps             LearningRoadmap[]
+  applications         JobApplication[]
+  bookings             MentorshipBooking[]
 }
 
 model IndustryProfile {
@@ -163,6 +166,21 @@ model StudentSkill {
   endorsements       FacultyEndorsement[]
 
   @@unique([studentProfileId, skillId])
+}
+
+model StudentProgrammingLanguage {
+  id                 String         @id @default(cuid())
+  studentProfileId   String
+  studentProfile     StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  language           String         // e.g. C, C++, Java, Python, JavaScript, TypeScript, Go, Rust, Kotlin, Swift, PHP, Ruby, Dart, C#
+  proficiency        String         @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+  verificationStatus String         @default("SELF_REPORTED") // SELF_REPORTED, FACULTY_ENDORSED, ASSESSMENT_VERIFIED
+  verifiedScore      Float?
+  relatedProjects    String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@unique([studentProfileId, language])
 }
 
 model Assessment {

@@ -16,9 +16,10 @@ import {
   Mail,
   Download,
   Share2,
-  QrCode,
   Sparkles,
   ArrowLeft,
+  Terminal,
+  Target,
 } from "lucide-react";
 
 export default function PublicStudentPortfolioPage() {
@@ -76,7 +77,7 @@ export default function PublicStudentPortfolioPage() {
           </div>
           <h2 className="text-lg font-bold text-white">Student Portfolio Not Found</h2>
           <p className="text-xs text-slate-400">
-            The requested public verified profile could not be located in the SIH 2026 database.
+            The requested public verified profile could not be located in the BridgeNext AI database.
           </p>
           <Link href="/">
             <Button variant="secondary" size="sm" icon={<ArrowLeft size={14} />}>
@@ -88,7 +89,16 @@ export default function PublicStudentPortfolioPage() {
     );
   }
 
-  const { user, profile, verifiedBadges = [], radarSkills = [], projects = [], accreditationProof } = data;
+  const {
+    user,
+    profile,
+    programmingLanguages = [],
+    verifiedBadges = [],
+    radarSkills = [],
+    endorsements = [],
+    projects = [],
+    accreditationProof,
+  } = data;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto py-4">
@@ -100,11 +110,13 @@ export default function PublicStudentPortfolioPage() {
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white">Outcome-Based Education (OBE) Verified Profile</span>
-              <Badge variant="success" size="sm">NEP 2020 Compliant</Badge>
+              <span className="text-xs font-bold text-white">
+                Outcome-Based Education (OBE) Verified Portfolio
+              </span>
+              <Badge variant="success" size="sm">NEP 2020 Aligned</Badge>
             </div>
             <p className="text-[11px] text-slate-300">
-              Verified by National Institute of Technology (NIRF Rank #{accreditationProof.institutionNIRFRank}) & bridgeNext ai Engine.
+              Verified by {profile.collegeName} & BridgeNext AI National Competency Engine.
             </p>
           </div>
         </div>
@@ -140,7 +152,7 @@ export default function PublicStudentPortfolioPage() {
                 <Building size={13} className="text-slate-400" />
                 <span>{profile.collegeName}</span>
                 <span>•</span>
-                <span className="text-slate-200 font-bold">CGPA: {profile.cgpa}</span>
+                <span className="text-emerald-400 font-bold">CGPA: {profile.cgpa}/10</span>
               </p>
             </div>
           </div>
@@ -153,10 +165,29 @@ export default function PublicStudentPortfolioPage() {
               SIH26-{user.id.substring(0, 10).toUpperCase()}
             </p>
             <span className="text-[10px] text-emerald-400 font-semibold block">
-              ● 100% Tamper Proof
+              ● Cryptographically Verified
             </span>
           </div>
         </div>
+
+        {/* Target Careers */}
+        {profile.targetCareers && profile.targetCareers.length > 0 && (
+          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2 text-xs">
+            <span className="text-slate-400 flex items-center gap-1.5 font-semibold">
+              <Target size={14} className="text-amber-400" /> Target Career Aspirations:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.targetCareers.map((c: string, idx: number) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 rounded-lg bg-primary-500/15 border border-primary-500/30 text-primary-300 font-medium text-[11px]"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {profile.bio && (
           <p className="text-xs text-slate-300 leading-relaxed bg-white/[0.02] p-4 rounded-2xl border border-white/5">
@@ -164,6 +195,46 @@ export default function PublicStudentPortfolioPage() {
           </p>
         )}
       </Card>
+
+      {/* Programming Languages */}
+      {programmingLanguages.length > 0 && (
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Terminal size={18} className="text-accent-cyan" />
+                Verified Programming Languages
+              </h3>
+              <p className="text-xs text-slate-400">
+                Software development languages evaluated for production systems.
+              </p>
+            </div>
+            <Badge variant="cyan" size="sm">{programmingLanguages.length} Languages</Badge>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+            {programmingLanguages.map((lang: any, idx: number) => (
+              <div
+                key={idx}
+                className="p-3.5 rounded-2xl glass-card border border-white/10 space-y-1.5"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-white">{lang.language}</h4>
+                  {lang.verificationStatus !== "SELF_REPORTED" ? (
+                    <ShieldCheck size={13} className="text-emerald-400" />
+                  ) : null}
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Proficiency: <strong className="text-cyan-300">{lang.proficiency}</strong>
+                </p>
+                {lang.relatedProjects && (
+                  <p className="text-[9px] text-slate-500 truncate">{lang.relatedProjects}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Verified OBE Badges Section */}
       <Card className="p-6 space-y-4">
@@ -201,14 +272,14 @@ export default function PublicStudentPortfolioPage() {
 
               <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400 font-mono">
                 <span>Verification Hash: {badge.verificationHash}</span>
-                <span className="text-slate-500">Issuer: bridgeNext ai</span>
+                <span className="text-slate-500">Issuer: BridgeNext AI</span>
               </div>
             </div>
           ))}
         </div>
       </Card>
 
-      {/* Competency Radar & Academic Highlights */}
+      {/* Competency Radar & Capstone Projects */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-6">
           <SkillRadarChart skills={radarSkills} />
@@ -259,7 +330,7 @@ export default function PublicStudentPortfolioPage() {
             </div>
 
             <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 text-[11px] text-slate-400 text-center">
-              Accredited for NAAC Criterion 5.2.1 (Student Progression & OBE Placement Badging)
+              Accredited for NAAC Criterion 5.2.1 (Student Progression & BridgeNext AI Placement Badging)
             </div>
           </Card>
         </div>

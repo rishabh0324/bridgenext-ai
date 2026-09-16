@@ -19,20 +19,35 @@ import {
 
 interface JobMatchesListProps {
   jobs: JobPostingItem[];
+  studentCgpa?: number | null;
   onApply?: (jobId: string) => Promise<void> | void;
 }
 
 export const JobMatchesList: React.FC<JobMatchesListProps> = ({
   jobs,
+  studentCgpa,
   onApply,
 }) => {
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [cgpaWarning, setCgpaWarning] = useState<string | null>(null);
 
-  const handleApply = async (jobId: string) => {
+  const handleApply = async (job: JobPostingItem) => {
+    setCgpaWarning(null);
+
+    const sCgpa = studentCgpa ?? 8.5;
+    const minCgpa = job.minCgpa ?? 0;
+
+    if (sCgpa < minCgpa) {
+      setCgpaWarning(
+        `You do not meet the minimum CGPA requirement of ${minCgpa} for ${job.title} (your CGPA: ${sCgpa.toFixed(2)}).`
+      );
+      return;
+    }
+
     try {
-      setApplyingId(jobId);
+      setApplyingId(job.id);
       if (onApply) {
-        await onApply(jobId);
+        await onApply(job.id);
       }
     } catch (e) {
       console.error("Error applying for opening:", e);
@@ -47,7 +62,7 @@ export const JobMatchesList: React.FC<JobMatchesListProps> = ({
         <div>
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Sparkles className="text-accent-cyan" size={20} />
-            AI-Matched Career & Placement Opportunities
+            BridgeNext AI Matched Career & Placement Opportunities
           </h3>
           <p className="text-xs text-slate-400">
             Open hiring drives ranked by multi-dimensional cosine vector similarity matching your verified competencies.
@@ -57,6 +72,13 @@ export const JobMatchesList: React.FC<JobMatchesListProps> = ({
           {jobs.length} Active Drives Matched
         </Badge>
       </div>
+
+      {cgpaWarning && (
+        <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-2">
+          <ShieldCheck size={16} className="text-rose-400 shrink-0" />
+          <span>{cgpaWarning}</span>
+        </div>
+      )}
 
       <div className="space-y-3.5">
         {jobs.length === 0 ? (
@@ -69,6 +91,7 @@ export const JobMatchesList: React.FC<JobMatchesListProps> = ({
             const score = job.matchScore ?? job.vectorMatchScore ?? 88;
             const isTopFit = score >= 90;
             const isApplying = applyingId === job.id;
+            const meetsCgpa = (studentCgpa ?? 8.5) >= (job.minCgpa ?? 0);
 
             return (
               <div
@@ -108,7 +131,9 @@ export const JobMatchesList: React.FC<JobMatchesListProps> = ({
                         {job.stipendSalary || job.stipendOrSalary || "₹60,000/mo"}
                       </span>
                       <span>•</span>
-                      <span>Min CGPA: {job.minCgpa || 7.5}</span>
+                      <span className={meetsCgpa ? "text-slate-300" : "text-rose-400 font-bold"}>
+                        Min CGPA: {job.minCgpa || 7.5} {!meetsCgpa && "(Requirement Not Met)"}
+                      </span>
                     </p>
 
                     {job.requiredSkills && job.requiredSkills.length > 0 && (
@@ -136,14 +161,14 @@ export const JobMatchesList: React.FC<JobMatchesListProps> = ({
                     </Badge>
                   ) : (
                     <Button
-                      variant="primary"
+                      variant={meetsCgpa ? "primary" : "outline"}
                       size="sm"
                       disabled={isApplying}
                       isLoading={isApplying}
-                      onClick={() => handleApply(job.id)}
+                      onClick={() => handleApply(job)}
                       icon={<ArrowRight size={13} />}
                     >
-                      1-Click Apply
+                      {meetsCgpa ? "1-Click Apply" : "Apply (Check CGPA)"}
                     </Button>
                   )}
                 </div>

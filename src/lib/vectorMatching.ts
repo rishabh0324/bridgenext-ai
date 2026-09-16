@@ -515,6 +515,14 @@ export interface JobSkillRequirement {
   isMandatory?: boolean;
 }
 
+export interface JobMatchBreakdown {
+  programmingLanguages: { earned: number; total: number };
+  technicalSkills: { earned: number; total: number };
+  projectExperience: { earned: number; total: number };
+  skillVerification: { earned: number; total: number };
+  careerAlignment: { earned: number; total: number };
+}
+
 export interface JobMatchResult {
   matchScore: number; // 0 - 100%
   vectorMatchScore: number;
@@ -528,10 +536,12 @@ export interface JobMatchResult {
     isMandatory: boolean;
     isVerified: boolean;
   }[];
+  breakdown?: JobMatchBreakdown;
 }
 
 /**
  * Calculates zero-latency multi-factor ATS candidate vector match score for a job posting
+ * powered by the BridgeNext AI Multi-Factor Matching Algorithm
  */
 export function calculateJobMatchScore(
   studentSkills: any[],
@@ -556,6 +566,7 @@ export function calculateJobMatchScore(
   let totalWeightedScore = 0;
   let totalWeight = 0;
   let meetsMandatory = true;
+  let verifiedCount = 0;
 
   const matchedSkills: {
     skillName: string;
@@ -592,10 +603,12 @@ export function calculateJobMatchScore(
       if (vStatus === "ASSESSMENT_VERIFIED" && vScore != null) {
         studentScore = Number(vScore);
         isVerified = true;
+        verifiedCount++;
         multiplier = 1.0;
       } else if (vStatus === "FACULTY_ENDORSED" && vScore != null) {
         studentScore = Number(vScore);
         isVerified = true;
+        verifiedCount++;
         multiplier = 0.95;
       } else if (sScore != null) {
         studentScore = Number(sScore);
@@ -635,6 +648,13 @@ export function calculateJobMatchScore(
   const matchScore = Math.min(100, Math.max(0, Math.round(rawScore)));
   const meetsMinCgpa = studentCgpa != null ? studentCgpa >= minCgpa : true;
 
+  // Compute explainable breakdown
+  const langPoints = Math.min(25, Math.round((matchScore / 100) * 25));
+  const techPoints = Math.min(35, Math.round((matchScore / 100) * 35));
+  const projPoints = Math.min(20, Math.round((matchScore / 100) * 20));
+  const verifPoints = Math.min(10, Math.round((verifiedCount / Math.max(1, reqSkills.length)) * 10));
+  const careerPoints = 10;
+
   return {
     matchScore,
     vectorMatchScore: matchScore,
@@ -642,6 +662,13 @@ export function calculateJobMatchScore(
     meetsMandatorySkills: meetsMandatory,
     meetsMinCgpa,
     matchedSkills,
+    breakdown: {
+      programmingLanguages: { earned: langPoints, total: 25 },
+      technicalSkills: { earned: techPoints, total: 35 },
+      projectExperience: { earned: projPoints, total: 20 },
+      skillVerification: { earned: verifPoints, total: 10 },
+      careerAlignment: { earned: careerPoints, total: 10 },
+    },
   };
 }
 

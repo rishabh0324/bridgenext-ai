@@ -52,13 +52,13 @@ export const Navbar: React.FC = () => {
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-lg tracking-tight text-white">
-                bridgeNext<span className="text-accent-cyan"> ai</span>
+                BridgeNext<span className="text-accent-cyan"> AI</span>
               </span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-300 border border-primary-500/30">
                 SIH'26
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium">Academia–Industry Collaboration Platform</p>
+            <p className="text-[10px] text-slate-400 font-medium">Academia–Industry Skill Intelligence Platform</p>
           </div>
         </Link>
 

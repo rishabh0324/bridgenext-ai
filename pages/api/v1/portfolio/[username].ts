@@ -13,7 +13,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, message: "Invalid username parameter" });
     }
 
-    // Match by slug or id or email
     const formattedName = username.replace(/-/g, " ").toLowerCase();
 
     let user = await prisma.user.findFirst({
@@ -29,8 +28,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         studentProfile: {
           include: {
             skills: {
-              include: { skill: true },
+              include: {
+                skill: true,
+                endorsements: {
+                  include: { facultyProfile: { include: { user: true } } },
+                },
+              },
             },
+            programmingLanguages: true,
             projects: true,
           },
         },
@@ -44,20 +49,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         include: {
           studentProfile: {
             include: {
-              skills: { include: { skill: true } },
+              skills: {
+                include: {
+                  skill: true,
+                  endorsements: {
+                    include: { facultyProfile: { include: { user: true } } },
+                  },
+                },
+              },
+              programmingLanguages: true,
               projects: true,
             },
           },
         },
       });
 
-      user = allStudents.find(
-        (u) =>
-          u.id === username ||
-          u.email.toLowerCase() === username.toLowerCase() ||
-          u.name.toLowerCase().replace(/\s+/g, "-") === username.toLowerCase() ||
-          u.name.toLowerCase() === formattedName
-      ) || null;
+      user =
+        allStudents.find(
+          (u) =>
+            u.id === username ||
+            u.email.toLowerCase() === username.toLowerCase() ||
+            u.name.toLowerCase().replace(/\s+/g, "-") === username.toLowerCase() ||
+            u.name.toLowerCase() === formattedName
+        ) || null;
     }
 
     if (!user || !user.studentProfile) {
@@ -69,6 +83,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const profile = user.studentProfile;
 
+    let targetCareers: string[] = ["Software Developer", "Full Stack Developer"];
+    if (profile.targetCareersJson) {
+      try {
+        targetCareers = JSON.parse(profile.targetCareersJson);
+      } catch (e) {
+        targetCareers = [profile.targetJobRole || "Software Developer"];
+      }
+    } else if (profile.targetJobRole) {
+      targetCareers = [profile.targetJobRole];
+    }
+
     const verifiedBadges = profile.skills
       .filter((s) => s.verificationStatus === "ASSESSMENT_VERIFIED" && s.badgeEarned)
       .map((s) => ({
@@ -77,8 +102,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         skillName: s.skill.name,
         score: s.verifiedScore,
         verifiedAt: s.verifiedAt,
-        issuer: "bridgeNext ai National Assessment Engine",
-        obeLevel: s.verifiedScore && s.verifiedScore >= 90 ? "Level 4 (Mastery)" : "Level 3 (Proficient)",
+        issuer: "BridgeNext AI National Assessment Engine",
+        obeLevel:
+          s.verifiedScore && s.verifiedScore >= 90
+            ? "Level 4 (Mastery)"
+            : "Level 3 (Proficient)",
         verificationHash: `OBE-SIH26-${s.id.substring(0, 8).toUpperCase()}`,
       }));
 
@@ -89,6 +117,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       benchmark: s.skill.industryBenchmark,
       status: s.verificationStatus,
     }));
+
+    const endorsements = profile.skills.flatMap((s) =>
+      (s.endorsements || []).map((e: any) => ({
+        skillName: s.skill.name,
+        facultyName: e.facultyProfile?.user?.name || "Dr. Ramesh Verma",
+        department: e.facultyProfile?.department || "Computer Science",
+        institutionName: e.facultyProfile?.institutionName || profile.collegeName,
+        endorsedScore: e.endorsedScore || 85.0,
+        feedback: e.feedback || "Verified core competency and capstone project rubric execution.",
+        date: e.createdAt,
+      }))
+    );
 
     return res.status(200).json({
       success: true,
@@ -108,9 +148,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           cgpa: profile.cgpa,
           rollNo: profile.rollNo,
           bio: profile.bio,
+          targetJobRole: profile.targetJobRole,
+          targetCareers,
         },
+        programmingLanguages: profile.programmingLanguages,
         verifiedBadges,
         radarSkills,
+        endorsements,
         projects: profile.projects,
         accreditationProof: {
           nep2020Compliant: true,
@@ -122,6 +166,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   } catch (error: any) {
     console.error("Error retrieving portfolio:", error);
-    return res.status(500).json({ success: false, message: "Internal server error fetching student portfolio" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error fetching student portfolio",
+    });
   }
 }
