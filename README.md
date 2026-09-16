@@ -10,10 +10,10 @@
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![SQLite](https://img.shields.io/badge/SQLite-Zero--Config-003B57?style=for-the-badge&logo=sqlite)](https://www.sqlite.org/)
 [![NEP 2020 OBE](https://img.shields.io/badge/NEP_2020-OBE_Compliant-059669?style=for-the-badge)](https://www.education.gov.in/)
-[![Tests](https://img.shields.io/badge/Test_Suite-57%2F57_Passed_(100%25)-success?style=for-the-badge)](file:///d:/sih#44)
+[![Tests](https://img.shields.io/badge/Test_Suite-Passed_(100%25)-success?style=for-the-badge)](file:///d:/sih#44)
 
 <p align="center">
-  <b>Bridging the structural gap between academic engineering curricula and modern corporate hiring demands through zero-latency vector competency matching, adaptive proctored assessments, dynamic AI learning pathways, and accreditation telemetry.</b>
+  <b>Bridging the structural gap between academic engineering curricula and modern corporate hiring demands through zero-latency vector competency matching, adaptive proctored assessments, dynamic AI learning pathways, interactive language proficiencies, and accreditation telemetry.</b>
 </p>
 
 [Explore Features](#-features--ecosystem-breakdown) • [System Architecture](#-system-architecture) • [Real Registration & Onboarding](#-real-registration--multi-role-onboarding) • [Quickstart Guide](#-step-by-step-setup-guide) • [API Reference](#-api-endpoints-reference)
@@ -29,11 +29,12 @@ Traditional higher education systems face a profound disconnect: university curr
 **bridgeNext ai** solves this challenge through an authenticated, multi-role digital platform connecting **Students, Corporate Recruiters, Faculty Mentors, and Institutional TPO Administrators**. Aligned with the **National Education Policy (NEP 2020)** and **Outcome-Based Education (OBE)** frameworks, the platform delivers:
 
 1. **Real User Registration & Multi-Step Role Onboarding**: Zero mock logins or demo bypasses. Every user signs up with real credentials, selects their role, and completes an interactive onboarding wizard to configure their profile in the database.
-2. **Student Competency Mapping**: Dynamic polar radar visualization with multi-tier verification (`SELF_REPORTED` $\rightarrow$ `ASSESSMENT_VERIFIED` $\rightarrow$ `FACULTY_ENDORSED`).
+2. **Student Competency Mapping & Language Matrix**: Dynamic polar radar visualization and dedicated programming language proficiency cards with multi-tier verification (`SELF_REPORTED` $\rightarrow$ `ASSESSMENT_VERIFIED` $\rightarrow$ `FACULTY_ENDORSED`).
 3. **AI Skill-Gap & Recovery Roadmaps**: Sub-50ms vector cosine matching ($\cos\theta$) comparing student credentials against industry benchmark vectors to generate actionable, milestone-driven recovery paths.
-4. **Corporate Vector ATS & Job Drives**: Multi-factor competency weighting ($1 - 5$), mandatory requirement enforcement, candidate search, and a 5-stage recruitment Kanban board.
-5. **Faculty Mentorship & Endorsements**: 1:1 Guidance scheduling with video meeting links, student competency endorsements ($0.95\times$ vector credit), and an automated curriculum gap advisor.
+4. **Corporate Vector ATS & Applicant Deep-Dive Modals**: Multi-factor competency weighting ($1 - 5$), candidate radar previews, portfolio inspections, and a 5-stage recruitment Kanban board.
+5. **Faculty Mentorship & Guidance Booking**: 1:1 guidance scheduling with student booking queues, Google Meet video integration, and academic competency endorsements ($0.95\times$ vector credit).
 6. **Institutional Accreditation Telemetry**: Real-time campus placement analytics, department readiness indices, and 1-click export of **NAAC Criteria 2.6 & 5.2**, **NIRF Placement Data**, and **NBA Program Outcome (PO)** attainment matrices.
+7. **Cloud RLS & Edge Middleware**: Next.js global route middleware and Supabase/PostgreSQL Row-Level Security (RLS) SQL policies for secure enterprise cloud deployment.
 
 ---
 
@@ -42,7 +43,7 @@ Traditional higher education systems face a profound disconnect: university curr
 ```
                                ┌─────────────────────────────────────────┐
                                │       bridgeNext ai Web Gateway         │
-                               │   [Real Auth Context] [JWT HttpOnly]    │
+                               │   [Edge Middleware] [JWT HttpOnly]      │
                                └────────────────────┬────────────────────┘
                                                     │
          ┌──────────────────┬───────────────────────┼───────────────────────┬──────────────────┐
@@ -50,10 +51,11 @@ Traditional higher education systems face a profound disconnect: university curr
  🎓 Student Desk    💼 Recruiter ATS        🏅 Faculty Hub          🏛️ Institution TPO 🛡️ System Admin
   (/student)         (/industry)             (/faculty)              (/institution)     (/admin)
   • Skill Radar      • Job Drive Creator     • 1:1 Mentorship Sched  • Campus Stats     • User Directory
-  • Anti-Cheat Tests • Multi-Skill Weights   • Competency Endorse    • Dept Readiness   • RBAC Security
-  • Vector Gap Calc  • Sub-50ms Search       • Curriculum Advisor    • Demand / Supply  • Audit Logs
-  • AI Roadmaps      • ATS Kanban Pipeline   • Capstone Evaluations  • NAAC/NIRF Export • Governance
-  • 1-Click Apply    • Candidate Profiles    • Feedback Telemetry    • NBA PO Matrices  • System Health
+  • Language Matrix  • Multi-Skill Weights   • Competency Endorse    • Dept Readiness   • RBAC Security
+  • Guidance Booking • Applicant Modal       • Curriculum Advisor    • Demand / Supply  • Audit Logs
+  • Anti-Cheat Tests • Sub-50ms Search       • Capstone Evaluations  • NAAC/NIRF Export • Cloud RLS
+  • AI Roadmaps      • ATS Kanban Pipeline   • Feedback Telemetry    • NBA PO Matrices  • System Health
+  • 1-Click Apply    • Candidate Profiles    • Advisory Hours        • Placement Rate   • Edge Shields
 ```
 
 ---
@@ -62,10 +64,10 @@ Traditional higher education systems face a profound disconnect: university curr
 
 | # | Role Identifier | Persona | Registration Availability | Primary Dashboard | Key Telemetry Captured During Onboarding |
 |---|---|---|---|---|---|
-| 1 | `STUDENT` | Student | Public ([`/register`](/register)) | [`/student`](/student) | College, Degree, Dept, Year, Semester, CGPA, Roll No, Technical Skills (with self-scores), Soft Skills, Career Role, Preferred Location |
-| 2 | `INDUSTRY` | Industry Recruiter | Public ([`/register`](/register)) | [`/industry`](/industry) | Company Name, Website, Designation, Domain, Company Size, HQ Location, Target Hiring Areas, Skill Requirements |
-| 3 | `FACULTY` | Faculty Mentor | Public ([`/register`](/register)) | [`/faculty`](/faculty) | Institution Name, Department, Designation, Qualifications, Core Specialization, Research Areas, Mentorship Focus |
-| 4 | `INSTITUTION` | Institution TPO Admin | Public ([`/register`](/register)) | [`/institution`](/institution) | TPO Name, Designation, Institute Name, Type, Affiliation, Official Email, Address, Depts List, Student Count, NIRF Rank |
+| 1 | `STUDENT` | Student | Public ([`/register`](/register)) | [`/student`](/student) (or [`/student/dashboard`](/student/dashboard)) | College, Degree, Dept, Year, Semester, CGPA, Roll No, Technical Skills (with self-scores), Soft Skills, Career Role, Preferred Location |
+| 2 | `INDUSTRY` | Industry Recruiter | Public ([`/register`](/register)) | [`/industry`](/industry) (or [`/industry/dashboard`](/industry/dashboard)) | Company Name, Website, Designation, Domain, Company Size, HQ Location, Target Hiring Areas, Skill Requirements |
+| 3 | `FACULTY` | Faculty Mentor | Public ([`/register`](/register)) | [`/faculty`](/faculty) (or [`/faculty/dashboard`](/faculty/dashboard)) | Institution Name, Department, Designation, Qualifications, Core Specialization, Research Areas, Mentorship Focus |
+| 4 | `INSTITUTION` | Institution TPO Admin | Public ([`/register`](/register)) | [`/institution`](/institution) (or [`/tpo/dashboard`](/tpo/dashboard)) | TPO Name, Designation, Institute Name, Type, Affiliation, Official Email, Address, Depts List, Student Count, NIRF Rank |
 | 5 | `ADMIN` | Platform System Admin | Elevated / Seeded Only | [`/admin`](/admin) | Root administrative control. **Public registration is strictly blocked (HTTP 403 Forbidden)** |
 | 6 | `Guest` | Public Portfolio Viewer | No Login Required | [`/p/[username]`](/p/aarav-sharma) | Public read-only verified skill radar, OBE Level badges, project links. Password hashes & private tokens stripped |
 
@@ -104,6 +106,8 @@ flowchart TD
 
 ### 1. 🎓 Student Experience & AI Learning Pathways
 - **Master Competency Radar**: Live polar radar chart mapping student proficiencies across Languages, Frameworks, Databases, Cloud & DevOps, AI/ML, and Core Engineering.
+- **Programming Languages Matrix Card**: Dedicated interactive tracker for Core Programming Languages (Python, TypeScript, C++, Java, Go, Rust) with proficiency levels, live self-score sliders, and direct links to proctored certification assessments.
+- **1:1 Faculty Guidance Booking**: Real-time scheduler enabling students to browse available faculty mentorship slots, submit discussion agendas, and receive Google Meet session links.
 - **Adaptive Proctored Assessments**: Anti-cheat tab-switch detection countdown tests with randomized question delivery and automated evaluation ($\ge 70\%$ passing threshold) awarding verifiable digital OBE badges.
 - **AI Skill-Gap Matrix**: Computes vector cosine similarity and percentage gap against industry benchmarks:
   $$\text{Cosine Similarity} = \frac{\vec{S} \cdot \vec{T}}{\|\vec{S}\| \|\vec{T}\|}$$
@@ -114,6 +118,7 @@ flowchart TD
 ### 2. 💼 Corporate Recruiter Desk & Vector ATS Matching
 - **Skill-Weighted Opening Creator**: Define hiring drives with customized requirement vectors, importance weights ($1 - 5$), minimum benchmark thresholds ($0 - 100\%$), and mandatory constraints.
 - **Sub-50ms Candidate Vector Matcher**: Instant ranking of applicants based on cosine similarity between the candidate's verified vector and the job requirement vector.
+- **Applicant Profile Deep-Dive Modal**: Full-screen evaluation modal allowing recruiters to inspect a candidate's complete verified skill radar, academic history, department, portfolio links, and 1-click ATS stage advancement.
 - **Visual ATS Pipeline Kanban**: 5-stage recruitment funnel (`APPLIED` $\rightarrow$ `UNDER_REVIEW` $\rightarrow$ `SHORTLISTED` $\rightarrow$ `TECHNICAL_INTERVIEW` $\rightarrow$ `OFFERED`), candidate search, match score filtering, and 1-click stage advancement.
 
 ### 3. 🏅 Faculty Mentorship & Advisory Hub
@@ -137,8 +142,9 @@ flowchart TD
 | **Language** | **TypeScript 5.0** | Strict compile-time type safety across database schemas, APIs, and components. |
 | **Styling & Theme** | **Tailwind CSS + Glassmorphism Tokens** | Curated dark-mode palette, custom glass cards, glow effects, and modern aesthetics. |
 | **Icons & Visuals** | **Lucide React + Recharts** | High-resolution SVG iconography and dynamic responsive radar, bar, and area charts. |
-| **Database & ORM** | **SQLite + Prisma ORM** | Zero-configuration local database with strict relational foreign keys and migrations. |
+| **Database & ORM** | **SQLite / PostgreSQL + Prisma ORM** | Zero-configuration local database with strict relational foreign keys and migrations. |
 | **Security & Auth** | **JWT (HTTP-Only) + Bcrypt Hashing** | Secure session management with role-based route isolation and minimal token payload. |
+| **Cloud RLS** | **Supabase / PostgreSQL RLS Policies** | Production-ready SQL security policies (`prisma/supabase_rls.sql`) for multi-tenant isolation. |
 | **AI Matching Engine**| **Multi-Dimensional Vector Cosine Math** | Sub-50ms mathematical vector similarity calculation with multi-tier verification credits. |
 
 ---
@@ -147,6 +153,7 @@ flowchart TD
 
 ```
 d:\sih#44\
+├── middleware.ts                     # Next.js Global Edge Route Middleware & Protection
 ├── pages/
 │   ├── _app.tsx                      # Root App Wrapper (AuthProvider, Toast & Glass Styles)
 │   ├── _document.tsx                 # HTML Document Head (Fonts, Meta, Theme)
@@ -162,8 +169,13 @@ d:\sih#44\
 │   ├── institution.tsx               # Institution TPO Desk (Stats, Dept Index, Accreditation)
 │   ├── admin.tsx                     # System Admin Command Hub
 │   ├── p/[username].tsx              # Public Verified Student OBE Portfolio
+│   ├── student/dashboard.tsx         # Student Dashboard Alias
+│   ├── industry/dashboard.tsx        # Industry Recruiter Dashboard Alias
+│   ├── faculty/dashboard.tsx         # Faculty Mentor Dashboard Alias
+│   ├── tpo/dashboard.tsx             # Institution TPO Dashboard Alias
 │   └── api/v1/                       # RESTful Backend Route Handlers
 │       ├── auth/                     # Authentication (login, register, onboarding, me, reset)
+│       ├── student/                  # Student APIs (programming-languages, target-careers)
 │       ├── skills.ts                 # Master Skills & Self-Reporting
 │       ├── assessments/              # Proctored Test Delivery & Automated Evaluation
 │       ├── portfolio/[username].ts   # Public Portfolio Endpoint
@@ -176,12 +188,13 @@ d:\sih#44\
 ├── prisma/
 │   ├── schema.prisma                 # Complete Relational Schema (12 Models)
 │   ├── seed.js                       # Comprehensive Seeder (5 Personas & Master Content)
+│   ├── supabase_rls.sql              # Supabase / PostgreSQL Row-Level Security Policies
 │   └── dev.db                        # SQLite Database
 ├── src/
 │   ├── components/
 │   │   ├── shared/                   # Navbar, AuthGuard, MetricCard
-│   │   ├── student/                  # SkillRadarChart, ProctoredAssessmentModal, SkillGapMatrix, RoadmapTimeline, JobMatchesList
-│   │   ├── recruiter/                # CandidatesPipeline, PostJobModal, JobListingTable
+│   │   ├── student/                  # SkillRadarChart, ProgrammingLanguagesCard, StudentGuidanceBooking, ProctoredAssessmentModal, SkillGapMatrix, RoadmapTimeline, JobMatchesList
+│   │   ├── recruiter/                # CandidatesPipeline, ApplicantProfileModal, PostJobModal, JobListingTable
 │   │   ├── faculty/                  # MentorshipSchedule, EndorsementDesk, CurriculumAdvisory
 │   │   ├── tpo/                      # PlacementTrendsChart, DepartmentBreakdown, AccreditationExportModal
 │   │   └── ui/                       # Button, Card, Badge, Progress, Modal
@@ -190,6 +203,8 @@ d:\sih#44\
 │   ├── lib/
 │   │   ├── auth.ts                   # Bcrypt Salt Hashing & Compact JWT Verification
 │   │   ├── prisma.ts                 # Prisma Client Singleton
+│   │   ├── supabaseClient.ts         # Optional Supabase Client Singleton
+│   │   ├── supabaseServer.ts         # Optional Supabase Server-Side Connector
 │   │   ├── vectorMatching.ts         # Vector Cosine Similarity & AI Gap Analysis Library
 │   │   ├── mockData.ts               # Domain Fixtures & Fallback Telemetry
 │   │   └── apiResponse.ts            # Standardized Response Envelope Helper
@@ -198,6 +213,7 @@ d:\sih#44\
 ├── test_real_onboarding_audit.js     # Real Registration & Onboarding Suite (12 Assertions)
 ├── test_auth_rbac_audit.js           # Auth & RBAC Security Suite (19 Assertions)
 ├── test_master_system_audit.js       # Master System Integration Suite (26 Assertions)
+├── test_new_features_audit.js        # New Features Verification Suite
 ├── package.json
 └── tsconfig.json
 ```
@@ -231,16 +247,19 @@ node prisma/seed.js
 ```
 
 ### Step 3: Run Full Automated Verification Suites
-Execute all automated test suites to verify 100% platform integrity (57/57 tests passing):
+Execute all automated test suites to verify platform integrity:
 ```bash
-# 1. Real Registration & Multi-Step Role Onboarding Suite (12/12 Passed)
+# 1. Real Registration & Multi-Step Role Onboarding Suite
 node test_real_onboarding_audit.js
 
-# 2. Authentication & RBAC Security Suite (19/19 Passed)
+# 2. Authentication & RBAC Security Suite
 node test_auth_rbac_audit.js
 
-# 3. Master System Integration & Telemetry Suite (26/26 Passed)
+# 3. Master System Integration & Telemetry Suite
 node test_master_system_audit.js
+
+# 4. New Platform Features Suite
+node test_new_features_audit.js
 ```
 
 ### Step 4: Start the Development Server
@@ -274,6 +293,9 @@ All API responses follow a standardized JSON envelope structure:
 | `POST` | `/api/v1/auth/onboarding` | Submit role-specific profile & complete onboarding (`isOnboarded: true`) | Authenticated |
 | `POST` | `/api/v1/auth/logout` | Invalidate & clear session cookie | Public |
 | `GET` | `/api/v1/auth/me` | Inspect active session persona & relational database profile | Authenticated |
+| `GET` | `/api/v1/student/programming-languages` | Fetch student core programming languages matrix & levels | `STUDENT` |
+| `POST` | `/api/v1/student/programming-languages` | Update programming language proficiency & self-ratings | `STUDENT` |
+| `GET` | `/api/v1/student/target-careers` | Query target career paths & skill requirements | `STUDENT` |
 | `GET` | `/api/v1/skills` | List master skills taxonomy with user proficiencies | Authenticated |
 | `POST` | `/api/v1/skills` | Self-report a new competency | `STUDENT` |
 | `GET` | `/api/v1/assessments` | Fetch available adaptive test catalog & scores | Authenticated |
